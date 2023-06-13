@@ -32,6 +32,10 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     var bestScoreLabelNode:SKLabelNode!    // ←追加
     let userDefaults:UserDefaults = UserDefaults.standard    // 追加
 
+    var itemscore = 0  // ←追加
+    var itemscoreLabelNode:SKLabelNode!    // ←追加
+    var bestItemScoreLabelNode:SKLabelNode!    // ←追加
+    
     // SKView上にシーンが表示されたときに呼ばれるメソッド
     override func didMove(to view: SKView) {
         
@@ -76,15 +80,35 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         scoreLabelNode.text = "Score:\(score)"
         self.addChild(scoreLabelNode)
 
+        //アイテムスコア表示を作成
+        itemscore = 0
+        itemscoreLabelNode = SKLabelNode()
+        itemscoreLabelNode.fontColor = UIColor.black
+        itemscoreLabelNode.position = CGPoint(x: 10, y: self.frame.size.height - 90)
+        itemscoreLabelNode.zPosition = 100 // 一番手前に表示する
+        itemscoreLabelNode.horizontalAlignmentMode = SKLabelHorizontalAlignmentMode.left
+        itemscoreLabelNode.text = "ItemScore:\(itemscore)"
+        self.addChild(itemscoreLabelNode)
+        
         // ベストスコア表示を作成
         let bestScore = userDefaults.integer(forKey: "BEST")
         bestScoreLabelNode = SKLabelNode()
         bestScoreLabelNode.fontColor = UIColor.black
-        bestScoreLabelNode.position = CGPoint(x: 10, y: self.frame.size.height - 90)
+        bestScoreLabelNode.position = CGPoint(x: 10, y: self.frame.size.height - 120)
         bestScoreLabelNode.zPosition = 100 // 一番手前に表示する
         bestScoreLabelNode.horizontalAlignmentMode = SKLabelHorizontalAlignmentMode.left
         bestScoreLabelNode.text = "Best Score:\(bestScore)"
         self.addChild(bestScoreLabelNode)
+        
+        // ベストアイテムスコア表示を作成
+        let itembestScore = userDefaults.integer(forKey: "ITEMBEST")
+        bestItemScoreLabelNode = SKLabelNode()
+        bestItemScoreLabelNode.fontColor = UIColor.black
+        bestItemScoreLabelNode.position = CGPoint(x: 10, y: self.frame.size.height - 150)
+        bestItemScoreLabelNode.zPosition = 100 // 一番手前に表示する
+        bestItemScoreLabelNode.horizontalAlignmentMode = SKLabelHorizontalAlignmentMode.left
+        bestItemScoreLabelNode.text = "Best Item Score:\(itembestScore)"
+        self.addChild(bestItemScoreLabelNode)
     }
     
     func setupGround() {
@@ -380,7 +404,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             self.starNode.addChild(star)
         })
         // 次の壁作成までの時間待ちのアクションを作成
-        let waitAnimation = SKAction.wait(forDuration: 2)
+        let waitAnimation = SKAction.wait(forDuration: 4)
         
         // 壁を作成->時間待ち->壁を作成を無限に繰り返すアクションを作成
         let repeatForeverAnimation = SKAction.repeatForever(SKAction.sequence([createStarAnimation, waitAnimation]))
@@ -410,10 +434,11 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
                 userDefaults.set(bestScore, forKey: "BEST")
             } // --- ここまで追加---
         }else if(contact.bodyA.categoryBitMask & starCategory) == starCategory || (contact.bodyB.categoryBitMask & starCategory) == starCategory{
+
             // スコアカウント用の透明な壁と衝突した
-            print("ScoreUp")
-            score += 1
-            scoreLabelNode.text = "Score:\(score)"    // ←追加
+            print("ItemScoreUp")
+            itemscore += 1
+            itemscoreLabelNode.text = "Item Score:\(itemscore)"    // ←追加
             
             if let soundURL = Bundle.main.url(forResource: "free_sound8", withExtension: "mp3"){
                 do{
@@ -425,12 +450,13 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             }
             
             // ベストスコア更新か確認する --- ここから ---
-            var bestScore = userDefaults.integer(forKey: "BEST")
-            if score > bestScore {
-                bestScore = score
-                bestScoreLabelNode.text = "Best Score:\(bestScore)"    // ←追加
-                userDefaults.set(bestScore, forKey: "BEST")
+            var itembestScore = userDefaults.integer(forKey: "ITEMBEST")
+            if itemscore > itembestScore {
+                itembestScore = itemscore
+                bestItemScoreLabelNode.text = "Best Item Score:\(itembestScore)"    // ←追加
+                userDefaults.set(itembestScore, forKey: "ITEMBEST")
             } // --- ここまで追加---
+            starNode.removeAllChildren()
         }else {
             // 壁か地面と衝突した
             print("GameOver")
@@ -456,6 +482,9 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         // スコアを0にする
         score = 0
         scoreLabelNode.text = "Score:\(score)"    // ←追加
+        
+        itemscore = 0
+        itemscoreLabelNode.text = "Item Score:\(itemscore)"
 
         // 鳥を初期位置に戻し、壁と地面の両方に反発するように戻す
         bird.position = CGPoint(x: self.frame.size.width * 0.2, y:self.frame.size.height * 0.7)
